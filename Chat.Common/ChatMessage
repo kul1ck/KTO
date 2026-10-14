@@ -1,0 +1,27 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Chat.Common
+{
+    public class ChatMessage
+    {
+
+        public string Text { get; private set; }
+        public string From { get; private set; }
+        public DateTime SentAt { get; private set; }
+        public ChatMessage(string from, string text)
+        {
+            Text = text;
+            From = from;
+            SentAt = DateTime.Now;
+        }
+        public override string ToString()
+        {
+            return "[" + SentAt.ToString("HH:mm:ss") + "] " + From + ": " + Text;
+        }
+
+    }
+}
