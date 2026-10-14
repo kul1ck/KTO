@@ -1,0 +1,98 @@
+using Chat.Common;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
+
+namespace Chat.Server
+{
+    public class ChatServer
+    {
+        private readonly TcpListener listener;
+        private readonly ClientList clients = new ClientList();
+        private readonly object _lock = new object();
+        public Action<string> OnUserConnected;
+        public Action<string> OnUserDisconnected;
+        public Action<ChatMessage> OnMessage;
+        public ChatServer(int port)
+        {
+            listener = new TcpListener(IPAddress.Any, port);
+        }
+        public void Start()
+        {
+            listener.Start();
+            Console.WriteLine("Запуск порта сервера: " + ((IPEndPoint)listener.LocalEndpoint).Port);
+            while (true)
+            {
+                TcpClient tcp = listener.AcceptTcpClient();
+                ClientConnection con = new ClientConnection(tcp);
+                Task.Run(() =>
+                {
+                    HandleClient(con);
+                });
+            }
+        }
+        private void HandleClient(ClientConnection conn)
+        {
+            try
+            {
+                string loginLine = conn.ReadLine();
+                if (loginLine == null) return;
+                bool tryDecode = Protocol.TryDecode(loginLine, out string type, out string name);
+                if (tryDecode == false || type != Protocol.login)
+                {
+                    conn.Dispose();
+                    return;
+                }
+                conn.Name = name;
+                lock (_lock) clients.Add(conn);
+                if ((OnUserConnected) != null) OnUserConnected(name);
+                Broadcast("SERVER", name + " в сети");
+                while (true)
+                {
+                    string line = conn.ReadLine();
+                    if (line == null) return;
+                    bool tryDecode2 = Protocol.TryDecode(line, out type, out string text) && type == Protocol.msg;
+                    if (tryDecode2 == true)
+                    {
+                        ChatMessage msg = new ChatMessage(name, text);
+                        if (OnMessage != null) OnMessage(msg);
+                    }
+                    Broadcast(name, text);
+                }
+            }                                                                                                                                      //67
+            catch (Exception ex)
+            {
+                Console.WriteLine("Ошибка клиента " + conn.Name + ": " + ex.Message);
+            }
+            finally
+            {
+                lock (_lock) clients.Remove(conn);
+            }
+            if (OnUserDisconnected != null) OnUserDisconnected(conn.Name);
+            Broadcast("SERVER", conn.Name + " не в сети");
+            conn.Dispose();
+        }
+        private void Broadcast(string from, string text)
+        {
+            string line = Protocol.Encode(Protocol.msg, from + ": " + text);
+            ClientConnection[] snapshot;
+            int count;
+            lock (_lock)
+            {
+                count = clients.Count;
+                snapshot = new ClientConnection[count];
+                for (int i = 0; i < count; i++) { snapshot[i] = clients[i]; }
+            }
+            for (int i = 0; i < count; i++)
+            {
+                try { snapshot[i].Send(line); }
+                catch { }
+            }
+        }
+    }
+}
