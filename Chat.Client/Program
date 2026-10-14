@@ -1,0 +1,33 @@
+using Chat.Common;
+using System.Net.Sockets;
+using System.Text;
+
+namespace Chat.Client
+{
+    public class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.Write("Введите логин: ");
+            string name = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(name)) { Console.WriteLine("Имя не может быть пустым."); return; }
+            ChatClient client;
+            try { client = new ChatClient("192.168.46.44", 5000); }
+            catch (Exception ex) { Console.WriteLine("Не удалось подключится к серверу" + ex.Message); return; } //46 44
+            client.Login(name);
+            Console.WriteLine("Логин успешен. можете начинать переписку.");
+            Task listenTask = Task.Run(() => { client.Listen(); });
+            while (true)
+            {
+                string text = Console.ReadLine();
+                if (text == null || text == "/exit") { break; }
+                client.SendMessages(text);
+            }
+            client.Close();
+            try { listenTask.Wait(2000); }
+            catch { }
+
+            Console.WriteLine("Пока");
+        }
+    }
+}
