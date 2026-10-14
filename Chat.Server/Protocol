@@ -1,0 +1,33 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Chat.Common
+{
+    public static class Protocol
+    {
+        public const char separator = '|';
+        public const string login = "LOGIN";
+        public const string msg = "MSG";
+        public const string exit = "EXIT";
+
+        public static string Encode(string type, string payload)
+        {
+            return type + separator + payload;
+        }
+        public static bool TryDecode(string line, out string type, out string payload)
+        {
+            type = "";
+            payload = "";
+
+            if (string.IsNullOrEmpty(line)) return false;
+            int index = line.IndexOf(separator);
+            if (index < 0) return false;
+            type = line.Substring(0, index);
+            payload = line.Substring(index + 1);
+            return true;
+        }
+    }
+}
