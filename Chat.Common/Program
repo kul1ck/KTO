@@ -1,0 +1,17 @@
+namespace Chat.Common
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            ChatMessage msg = new ChatMessage("РумепельШтильцхен", "Привет");
+            Console.WriteLine(msg);
+
+            string encoded = Protocol.Encode(Protocol.login, "Вася");
+            Console.WriteLine(encoded);
+
+            if (Protocol.TryDecode(encoded, out string type, out string payload))
+                Console.WriteLine(type + " " + payload);
+        }
+    }
+}
