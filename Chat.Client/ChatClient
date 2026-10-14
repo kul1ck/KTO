@@ -1,0 +1,41 @@
+using Chat.Common;
+using Chat.Server;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Chat.Client
+{
+    public class ChatClient
+    {
+        private readonly TcpClient tcp;
+        private readonly ClientConnection conn;
+        public ChatClient(string  host, int port)
+        {
+            tcp = new TcpClient();
+            tcp.Connect(host, port);
+            conn = new ClientConnection(tcp);
+        }
+        public void Login(string name) => conn.Send(Protocol.Encode(Protocol.login, name));
+        public void SendMessages(string text) => conn.Send(Protocol.Encode(Protocol.msg, text));
+        public void Close() => conn.Dispose();
+        public void Listen()
+        {
+            try
+            {
+                while (true)
+                {
+                    string line = conn.ReadLine();
+                    if (line == null) { break; }
+                    bool isDecode = Protocol.TryDecode(line, out string type, out string payload);
+                    if (isDecode == true && type == Protocol.msg) { Console.WriteLine(payload); }
+                }
+            }
+            catch (Exception ex) { Console.WriteLine("Ошибка приема: " + ex.Message); }
+            Console.WriteLine("Соединение закрыто ");
+        }
+    }
+}
