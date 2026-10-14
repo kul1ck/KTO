@@ -1,0 +1,63 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Chat.Server
+{
+    public class ClientList
+    {
+        private ClientConnection[] items = new ClientConnection[8];
+        public ClientConnection this[int index]
+        {
+            get { return items[index]; }
+        }
+        private int count;
+        public int Count
+        {
+            get { return count; }
+        }
+        public void Add(ClientConnection c)
+        {
+            if (count == items.Length)
+            {
+                ClientConnection[] bigger = new ClientConnection[items.Length * 2];
+                for (int i = 0; i < count; i++)
+                {
+                    bigger[i] = items[i];
+                }
+                items = bigger;
+            }
+            items[count] = c;
+            count++;
+        }
+        public void Remove(ClientConnection c)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                if (items[i] == c)
+                {
+                    for (int j = i + 1; j < count; j++)
+                    {
+                        items[j] = items[j + 1];
+                    }
+                    count--;
+                    items[count] = null;
+                    return;
+                }
+            }
+        }
+        public ClientConnection FindByName(string name)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                if (items[i].Name == name)
+                {
+                    return items[i];
+                }
+            }
+            return null;
+        }
+    }
+}
