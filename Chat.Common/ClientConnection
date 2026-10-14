@@ -1,0 +1,31 @@
+using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+
+namespace Chat.Server;
+
+public class ClientConnection : IDisposable
+{
+    private readonly TcpClient tcp;
+    private readonly StreamReader reader;
+    private readonly StreamWriter writer;
+    public string Name { get; set; }
+    public ClientConnection(TcpClient _tcp)
+    {
+        tcp = _tcp;
+        NetworkStream stream = tcp.GetStream();
+        reader = new StreamReader(stream, Encoding.UTF8);
+        writer = new StreamWriter(stream, Encoding.UTF8);
+        writer.AutoFlush = true;
+        Name = "?";
+    }
+    public string ReadLine() => reader.ReadLine();
+    public void Send(string line) => writer.WriteLine(line);
+    public void Dispose()
+    {
+        reader.Dispose();
+        writer.Dispose();
+        tcp.Dispose();
+    }
+}
+
