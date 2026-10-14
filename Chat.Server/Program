@@ -1,0 +1,21 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Chat.Server
+{
+    public class Program
+    {
+        static void Main(string[] args)
+        {
+            ChatServer server = new ChatServer(5000);
+            server.OnUserConnected = name => Console.WriteLine("[+] " + name + ": подключение выполнено ");
+            server.OnUserDisconnected = name => Console.WriteLine("[-] " + name + ": отключение... ");
+            server.OnMessage = msg => Console.WriteLine(msg.ToString());
+            server.Start();
+        }
+    }
+}
